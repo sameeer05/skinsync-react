@@ -6,12 +6,14 @@ const Survey = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [questions, setQuestions] = useState([]);
+  const [showFollowUp, setShowFollowUp] = useState(false);
+
 
   // Define the base questions
   const baseQuestions = [
     {
       question: "What is your gender?",
-      options: ["Male", "Female", "Non-binary", "Prefer not to say"],
+      options: ["Male", "Female",],
       key: "gender",
     },
     {
@@ -61,6 +63,17 @@ const Survey = () => {
       },
       { question: "Do you prefer fragrance-free products?", options: ["Yes", "No"], key: "fragranceFree" },
       { question: "What is your preferred price range for skincare products?", options: ["Under $20", "$20-$50", "$50-$100", "Over $100"], key: "priceRange" }
+    ],
+    Combination: [
+      { question: "Which areas of your face are usually oily?", options: ["T-zone", "Cheeks", "Forehead", "Chin"], key: "oilyAreas" },
+      { question: "Do you experience both dry and oily areas simultaneously?", options: ["Yes", "No"], key: "dryOilyAreas" },
+      {
+        question: "What are your primary skin concerns?",
+        options: ["Oil control", "Moisture balance", "Pore size", "Fine lines and wrinkles"],
+        key: "primaryConcerns"
+      },
+      { question: "Do you use different products for different areas of your face?", options: ["Yes", "No"], key: "differentProducts" },
+      { question: "What is your preferred price range for skincare products?", options: ["Under $20", "$20-$50", "$50-$100", "Over $100"], key: "priceRange" }
     ]
   };
 
@@ -98,6 +111,17 @@ const Survey = () => {
       },
       { question: "Do you prefer rich, creamy products or lightweight, hydrating ones?", options: ["Rich & Creamy", "Lightweight & Hydrating"], key: "productPreference" },
       { question: "What is your preferred price range for skincare products?", options: ["Under $20", "$20-$50", "$50-$100", "Over $100"], key: "priceRange" }
+    ],
+    Combination: [
+      { question: "Which areas of your face are usually oily?", options: ["T-zone", "Cheeks", "Forehead", "Chin"], key: "oilyAreas" },
+      { question: "Do you experience both dry and oily areas simultaneously?", options: ["Yes", "No"], key: "dryOilyAreas" },
+      {
+        question: "What are your primary skin concerns?",
+        options: ["Oil control", "Moisture balance", "Pore size", "Fine lines and wrinkles"],
+        key: "primaryConcerns"
+      },
+      { question: "Do you prefer to use different products for different areas of your face?", options: ["Yes", "No"], key: "differentProducts" },
+      { question: "What is your preferred price range for skincare products?", options: ["Under $20", "$20-$50", "$50-$100", "Over $100"], key: "priceRange" }
     ]
   };
 
@@ -106,7 +130,8 @@ const Survey = () => {
   }, []);
 
   const nextStep = () => {
-    if (step === 2) {
+    console.log('step in nextStep: ', step);
+    if (step === 0) {
       const gender = answers["gender"];
       const skinType = answers["skinType"];
       let additionalQuestions = [];
@@ -117,71 +142,106 @@ const Survey = () => {
         additionalQuestions = femaleQuestions[skinType] || [];
       }
 
-      setQuestions((prevQuestions) => [...prevQuestions, ...additionalQuestions]);
+      setQuestions(additionalQuestions);  // Set only follow-up questions
+      setShowFollowUp(true);  // Show follow-up questions
+      setStep(1);  // Move to the next step
+    } else {
+      setStep(step + 1);  // Continue to next question
     }
-    setStep(step + 1);
   };
 
-  const prevStep = () => {
-    if (step > 0) {
+  const previousStep = () => {
+    console.log('step: ', step);
+    if (step > 1) {
       setStep(step - 1);
+      console.log('set block');
+    } else if (step === 1) {
+      setShowFollowUp(false);  // Go back to base questions
     }
+    console.log('step after: ', step);
   };
 
-  const handleAnswerChange = (value) => {
-    const currentQuestion = questions[step];
-    setAnswers({ ...answers, [currentQuestion.key]: value });
+  const handleAnswerChange = (key, value) => {
+    setAnswers({ ...answers, [key]: value });
   };
 
-  const renderQuestion = () => {
-    const currentQuestion = questions[step];
+  const renderBaseQuestions = () => {
     return (
-      <Container>
-        <Row className="justify-content-center">
-          <Col xs={12} md={8}>
-            <h2>{currentQuestion.question}</h2>
-            <div className="options">
-              {currentQuestion.options.map((option, index) => (
+      <div className="container">
+        {baseQuestions.map((question, index) => (
+          <div key={index} className="mb-4 text-center">
+            <h5>{question.question}</h5>
+            <div className="options d-flex justify-content-center flex-wrap">
+              {question.options.map((option, idx) => (
                 <label
-                  key={index}
-                  className={`option ${answers[currentQuestion.key] === option ? 'selected' : ''}`}
+                  key={idx}
+                  className={`option btn btn-outline-primary m-2 ${
+                    answers[question.key] === option ? 'selected' : ''
+                  }`}
                 >
                   <input
                     type="radio"
-                    name={currentQuestion.key}
+                    name={question.key}
                     value={option}
-                    checked={answers[currentQuestion.key] === option}
-                    onChange={() => handleAnswerChange(option)}
+                    checked={answers[question.key] === option}
+                    onChange={() => handleAnswerChange(question.key, option)}
                   />
                   {option}
                 </label>
               ))}
             </div>
-          </Col>
-        </Row>
-        <Row className="justify-content-center mt-4">
-          <Col xs="auto">
-            <Button variant="secondary" onClick={prevStep} disabled={step === 0}>
-              Back
-            </Button>
-          </Col>
-          <Col xs="auto">
-            <Button variant="primary" onClick={nextStep}>
-              {step < questions.length - 1 ? 'Next' : 'Submit'}
-            </Button>
-          </Col>
-        </Row>
-      </Container>
+          </div>
+        ))}
+        <div className="text-center mt-4">
+          <button className="btn btn-primary" onClick={nextStep} disabled={Object.keys(answers).length < baseQuestions.length}>
+            Next
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderQuestion = () => {
+    const currentQuestion = questions[step - 1];  // Adjusted for the step logic
+    console.log('currentQuestion for ',step-1,': ', currentQuestion);
+    console.log('all questions: ', questions);
+    return (
+      <div className="container text-center">
+        <button className="btn btn-link text-left" onClick={previousStep}>&lt; Back</button>
+        <h2>{currentQuestion.question}</h2>
+        <div className="options d-flex justify-content-center flex-wrap">
+          {currentQuestion.options.map((option, index) => (
+            <label
+              key={index}
+              className={`option btn btn-outline-primary m-2 ${
+                answers[currentQuestion.key] === option ? 'selected' : ''
+              }`}
+            >
+              <input
+                type="radio"
+                name={currentQuestion.key}
+                value={option}
+                checked={answers[currentQuestion.key] === option}
+                onChange={() => handleAnswerChange(currentQuestion.key, option)}
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+        <div className="text-center mt-4">
+          <button className="btn btn-primary" onClick={nextStep}>
+            Next
+          </button>
+        </div>
+      </div>
     );
   };
 
   return (
-    <div className="survey-container">
-      {/* <Button variant="link" onClick={prevStep} className="back-button">← Back</Button> */}
-      {step < questions.length ? renderQuestion() : <h2>Survey Complete! Thank you for your answers.</h2>}
+    <div>
+      {!showFollowUp ? renderBaseQuestions() : step <= questions.length ? renderQuestion() : <h2 className="text-center">Survey Complete! Thank you for your answers.</h2>}
     </div>
   );
 };
 
 export default Survey;
-
